@@ -89,7 +89,6 @@ export default async (fastify: FastifyInstance): Promise<void> => {
   // Delete user
   fastify.delete<{ Params: { id: string } }>('/:id', async (req, res) => {
     const client = await fastify.pg.connect()
-    console.log(req.params.id)
     try {
       const { rows } = await client.query(SQLStatementORM.deleteUser(req.params.id))
       return rows
@@ -97,5 +96,16 @@ export default async (fastify: FastifyInstance): Promise<void> => {
       // Release the client immediately after query resolves, or upon error
       client.release()
     }
+  })
+
+  // Transaction
+  // Add and Update user
+  fastify.post<{ Body: { name: string } }>('/transaction', async (req, res) => {
+    return await fastify.pg.transact(async client => {
+      const insert = await client.query<{ id: string }>('INSERT INTO users(name) VALUES($1) RETURNING id', [req.body.name])
+      const id = insert.rows[0].id
+      const { rows } = await client.query(`${SQLStatementORM.updateUser(id, 'Pepe')}`)
+      return rows
+    })
   })
 }

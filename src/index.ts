@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import userRoute from './routes/users'
-import dbRoute from './routes/db'
+import dbRoute from './routes/db-plugin'
 import postgres from '@fastify/postgres'
 import { connectionParams } from '../connection-config'
 

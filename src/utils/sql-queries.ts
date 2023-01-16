@@ -29,6 +29,6 @@ export class SQLStatementORM {
   }
 
   public static deleteUser (id: string): string {
-    return `DELETE FROM users WHERE id=${id} RETURNING *`
+    return `DELETE FROM users WHERE id=${id}`
   }
 }
