@@ -24,5 +24,5 @@ export const connectionParamsORM = new DataSource({
   database: 'testtypeorm',
   entities: [User],
   logging: true,
-  synchronize: true
+  synchronize: false
 })

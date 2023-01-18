@@ -10,7 +10,8 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
     id: number
 
-  @Column()
+  @Column({
+  })
     firstName: string
 
   @Column()
@@ -27,6 +28,6 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
     updatedAt: Date
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ select: false })
     deletedAt: Date
 }
