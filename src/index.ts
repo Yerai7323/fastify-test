@@ -3,14 +3,13 @@ import 'reflect-metadata'
 import userRoute from './routes/users'
 import dbPlugin from './routes/db-plugin'
 import dbTypeOrm from './routes/db-typeorm'
+import dbDvdRental from './routes/db-dvd-rental'
 import postgres from '@fastify/postgres'
 import { connectionParams, connectionORM } from '../connection-config'
 import * as dotenv from 'dotenv'
 
 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 dotenv.config({ path: `./.env.${process.env.NODE_ENV}` })
-// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-console.log(process.env.PORT)
 
 const fastify = Fastify({ logger: true })
 const PORT = process.env.PORT ?? 3000
@@ -29,6 +28,7 @@ const init = async (): Promise<void> => {
     await connectionORM.initialize()
     console.log('DATABASE TypeORM connected')
     await fastify.register(dbTypeOrm, { prefix: '/typeorm' })
+    await fastify.register(dbDvdRental, { prefix: '/dvd-rental' })
 
     fastify.listen({ port: +PORT }, (err, address) => {
       if (err != null) {

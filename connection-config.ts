@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { DataSource } from 'typeorm'
-import { User } from './src/entities/User'
+import * as dotenv from 'dotenv'
+
+// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+dotenv.config({ path: `./.env.${process.env.NODE_ENV}` })
+
 interface IConnectionConfig {
   port: number
   host: string
@@ -17,12 +22,13 @@ export const connectionParams: IConnectionConfig = {
 
 export const connectionORM = new DataSource({
   type: 'postgres',
-  port: 5432,
-  host: 'localhost',
-  username: 'admin',
-  password: '1234',
-  database: 'testtypeorm',
-  entities: [User],
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  port: Number(process.env.DB_PORT) || 5432,
+  host: process.env.DB_HOST ?? 'localhost',
+  username: process.env.DB_USERNAME ?? 'admin',
+  password: process.env.DB_PASSWORD ?? '1234',
+  database: process.env.DB_DATABASE ?? 'testtypeorm',
+  entities: [`${process.env.DB_ENTITIES ?? 'src/entities/*.ts'}`],
   logging: false,
   synchronize: false
 })
