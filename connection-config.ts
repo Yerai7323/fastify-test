@@ -15,7 +15,7 @@ export const connectionParams: IConnectionConfig = {
   database: 'testdb'
 }
 
-export const connectionParamsORM = new DataSource({
+export const connectionORM = new DataSource({
   type: 'postgres',
   port: 5432,
   host: 'localhost',
@@ -23,6 +23,6 @@ export const connectionParamsORM = new DataSource({
   password: '1234',
   database: 'testtypeorm',
   entities: [User],
-  logging: true,
+  logging: false,
   synchronize: false
 })

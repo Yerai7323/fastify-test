@@ -4,10 +4,16 @@ import userRoute from './routes/users'
 import dbPlugin from './routes/db-plugin'
 import dbTypeOrm from './routes/db-typeorm'
 import postgres from '@fastify/postgres'
-import { connectionParams, connectionParamsORM } from '../connection-config'
+import { connectionParams, connectionORM } from '../connection-config'
+import * as dotenv from 'dotenv'
+
+// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+dotenv.config({ path: `./.env.${process.env.NODE_ENV}` })
+// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+console.log(process.env.PORT)
 
 const fastify = Fastify({ logger: true })
-const PORT = 3000
+const PORT = process.env.PORT ?? 3000
 
 const init = async (): Promise<void> => {
   try {
@@ -20,11 +26,11 @@ const init = async (): Promise<void> => {
     await fastify.register(dbPlugin, { prefix: '/db' })
 
     // TypeORM
-    await connectionParamsORM.initialize()
+    await connectionORM.initialize()
     console.log('DATABASE TypeORM connected')
     await fastify.register(dbTypeOrm, { prefix: '/typeorm' })
 
-    fastify.listen({ port: PORT }, (err, address) => {
+    fastify.listen({ port: +PORT }, (err, address) => {
       if (err != null) {
         fastify.log.error(err)
         process.exit(1) // kill process

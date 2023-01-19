@@ -1,4 +1,4 @@
-import { Entity, BaseEntity } from 'typeorm'
+import { Entity } from 'typeorm'
 import { Column } from 'typeorm/decorator/columns/Column'
 import { CreateDateColumn } from 'typeorm/decorator/columns/CreateDateColumn'
 import { UpdateDateColumn } from 'typeorm/decorator/columns/UpdateDateColumn'
@@ -6,7 +6,7 @@ import { DeleteDateColumn } from 'typeorm/decorator/columns/DeleteDateColumn'
 import { PrimaryGeneratedColumn } from 'typeorm/decorator/columns/PrimaryGeneratedColumn'
 
 @Entity()
-export class User extends BaseEntity {
+export class User {
   @PrimaryGeneratedColumn()
     id: number
 
@@ -17,9 +17,7 @@ export class User extends BaseEntity {
   @Column()
     lastName: string
 
-  @Column({
-    default: true
-  })
+  @Column({ default: true })
     active: boolean
 
   @CreateDateColumn()
@@ -28,6 +26,6 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
     updatedAt: Date
 
-  @DeleteDateColumn({ select: false })
+  @DeleteDateColumn()
     deletedAt: Date
 }
