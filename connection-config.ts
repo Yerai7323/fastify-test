@@ -29,6 +29,6 @@ export const connectionORM = new DataSource({
   password: process.env.DB_PASSWORD ?? '1234',
   database: process.env.DB_DATABASE ?? 'testtypeorm',
   entities: [`${process.env.DB_ENTITIES ?? 'src/entities/*.ts'}`],
-  logging: false,
+  logging: true,
   synchronize: false
 })

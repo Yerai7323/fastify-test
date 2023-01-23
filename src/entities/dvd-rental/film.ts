@@ -1,7 +1,9 @@
-import { Entity, JoinColumn, ManyToOne } from 'typeorm'
+import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm'
 import { Column } from 'typeorm/decorator/columns/Column'
 import { PrimaryGeneratedColumn } from 'typeorm/decorator/columns/PrimaryGeneratedColumn'
 import { mpaa_rating } from '../../utils/enum/mpaa_rating'
+import { Actor } from './actor'
+import { Category } from './category'
 import { Language } from './language'
 
 @Entity()
@@ -17,6 +19,9 @@ export class Film {
 
   @Column()
     release_year: Date
+
+  @Column()
+    language_id: number
 
   @Column()
     rental_duration: number
@@ -47,4 +52,28 @@ export class Film {
     name: 'language_id'
   })
     language: Language
+
+  @ManyToMany('Category', 'films')
+  @JoinTable({
+    name: 'film_category',
+    joinColumn: {
+      name: 'film_id'
+    },
+    inverseJoinColumn: {
+      name: 'category_id'
+    }
+  })
+    categories: Category[]
+
+  @ManyToMany('Actor', 'films')
+  @JoinTable({
+    name: 'film_actor',
+    joinColumn: {
+      name: 'film_id'
+    },
+    inverseJoinColumn: {
+      name: 'actor_id'
+    }
+  })
+    actors: Actor[]
 }
