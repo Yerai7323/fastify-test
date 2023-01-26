@@ -1,9 +1,10 @@
-import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm'
+import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany } from 'typeorm'
 import { Column } from 'typeorm/decorator/columns/Column'
 import { PrimaryGeneratedColumn } from 'typeorm/decorator/columns/PrimaryGeneratedColumn'
 import { mpaa_rating } from '../../utils/enum/mpaa_rating'
 import { Actor } from './actor'
 import { Category } from './category'
+import { Inventory } from './inventory'
 import { Language } from './language'
 
 @Entity()
@@ -76,4 +77,10 @@ export class Film {
     }
   })
     actors: Actor[]
+
+  @OneToMany('Inventory', 'film')
+  @JoinColumn({
+    name: 'film'
+  })
+    inventories: Inventory[]
 }

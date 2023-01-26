@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { FastifyInstance } from 'fastify'
+import { ILike } from 'typeorm'
 import { connectionORM } from '../../connection-config'
 import { Film } from '../entities/dvd-rental/film'
+import { Inventory } from '../entities/dvd-rental/inventory'
 import { Language } from '../entities/dvd-rental/language'
+import { Payment } from '../entities/dvd-rental/payment'
+import { betweenPaymentId } from '../utils/where-clauses'
 
 const filmRepository = connectionORM.getRepository(Film)
 const languageRepository = connectionORM.getRepository(Language)
+const inventoryRepository = connectionORM.getRepository(Inventory)
+const paymentRepository = connectionORM.getRepository(Payment)
 
 export default async (fastify: FastifyInstance): Promise<void> => {
   // Find one Film by ID with Language
@@ -74,21 +80,141 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     }
   })
 
-  // Find mix tables
-  fastify.get('/mix', async (req, res) => {
-    console.time()
+  fastify.get('/aa', async (req, res) => {
     try {
+      const payment = await paymentRepository.find({
+        take: 10,
+        order: { payment_id: 'asc' },
+        relations: ['rental', 'rental.inventory']
+      })
+      res.send(payment)
+    } catch (error) {
+      if (error instanceof Error) {
+        res.send({ message: error.message })
+      }
+    }
+  })
+
+  fastify.get('/bb', async (req, res) => {
+    try {
+      const inventory = await inventoryRepository.find({
+        take: 10,
+        order: { inventory_id: 'asc' },
+        relations: ['rental']
+      })
+      res.send(inventory)
+    } catch (error) {
+      if (error instanceof Error) {
+        res.send({ message: error.message })
+      }
+    }
+  })
+
+  // Find mix tables
+  fastify.get<{
+    Querystring: {
+      skip: number
+      take: number
+      minPaymentId: number
+      maxPaymentId: number
+      titleContains: string
+    }
+  }>('/mix', async (req, res) => {
+    try {
+      let conditions: any = { }
+      let { take = 5, skip = 0, minPaymentId, maxPaymentId, titleContains } = req.query
+
+      if (titleContains !== undefined) {
+        conditions = {
+          title: ILike(`%${titleContains}%`),
+          ...conditions
+        }
+      }
+
+      if (minPaymentId !== undefined || maxPaymentId !== undefined) {
+        if (minPaymentId === undefined) minPaymentId = 0
+        if (maxPaymentId === undefined) maxPaymentId = 99999
+
+        const between = betweenPaymentId(minPaymentId, maxPaymentId)
+        conditions = {
+          inventories: between,
+          ...conditions
+        }
+        // conditions.inventories = between
+      }
+
       const films = await filmRepository.find({
         select: {
           film_id: true,
           title: true,
           categories: { name: true },
           language: { name: true },
-          actors: { first_name: true, last_name: true }
+          actors: {
+            first_name: true,
+            last_name: true
+          },
+          inventories: {
+            inventory_id: true,
+            rental: {
+              rental_id: true,
+              rental_date: true,
+              return_date: true,
+              payments: {
+                payment_id: true,
+                amount: true
+              }
+            }
+          }
         },
-        relations: ['categories', 'language', 'actors']
+        take,
+        skip,
+        where: [conditions, { film_id: 1 }], /* {
+          inventories: {
+            rental: {
+              payments: { payment_id: Between(minPaymentId, maxPaymentId) }
+            }
+          }
+        }, */
+        order: {
+          // film_id: 'asc'
+          inventories: {
+            rental: {
+              payments: { payment_id: 'desc' }
+            }
+          }
+        },
+        relations: [
+          'categories',
+          'language',
+          'actors',
+          'inventories',
+          'inventories.rental',
+          'inventories.rental.payments'
+        ]
       })
+      let totalAmount = 0
+      let count = 0
       const resp = films.map(film => {
+        const inventoriesId: Number[] = []
+        const storesId: Number[] = []
+        const rentalId: Number[] = []
+        const rentalDate: String[] = []
+        const amount: Number[] = []
+        const paymentId: Number[] = []
+        // eslint-disable-next-line array-callback-return
+        film.inventories.map(inventory => {
+          inventoriesId.push(inventory.inventory_id)
+          storesId.push(inventory.store_id)
+          rentalId.push(inventory.rental?.rental_id)
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+          rentalDate.push(`${inventory.rental?.rental_date.toISOString()} - ${inventory.rental?.return_date?.toISOString()}`)
+          // eslint-disable-next-line array-callback-return
+          inventory.rental?.payments.map(payment => {
+            paymentId.push(payment.payment_id)
+            amount.push(payment.amount)
+            totalAmount += payment.amount
+          })
+        })
         return {
           film_id: film.film_id,
           title: film.title,
@@ -98,16 +224,28 @@ export default async (fastify: FastifyInstance): Promise<void> => {
           language: film.language.name,
           actors: film.actors.map(actor => {
             return `${actor.first_name} ${actor.last_name}`
-          })
+          }),
+          inventories: {
+            inventories_id: inventoriesId
+          },
+          rental: {
+            rental_id: rentalId,
+            rental_date: rentalDate
+          },
+          payments: {
+            payment_id: paymentId,
+            amount
+          }
         }
       })
-      res.send(resp)
+      count = resp.length
+      const respFinal = { totalAmount, count, resp }
+      res.send(respFinal)
     } catch (error) {
       if (error instanceof Error) {
         res.send({ message: error.message })
       }
     }
-    console.timeEnd()
   })
 
   // Add film
