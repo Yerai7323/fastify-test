@@ -3,15 +3,14 @@ import { FastifyInstance } from 'fastify'
 import { ILike } from 'typeorm'
 import { connectionORM } from '../../connection-config'
 import { Film } from '../entities/dvd-rental/film'
-import { Inventory } from '../entities/dvd-rental/inventory'
 import { Language } from '../entities/dvd-rental/language'
-import { Payment } from '../entities/dvd-rental/payment'
-import { betweenPaymentId } from '../utils/where-clauses'
+import { Rental } from '../entities/dvd-rental/rental'
+import { orderByAndType } from '../utils/order-clauses'
+import { betweenPaymentId, dates } from '../utils/where-clauses'
 
 const filmRepository = connectionORM.getRepository(Film)
 const languageRepository = connectionORM.getRepository(Language)
-const inventoryRepository = connectionORM.getRepository(Inventory)
-const paymentRepository = connectionORM.getRepository(Payment)
+const rentalRepository = connectionORM.getRepository(Rental)
 
 export default async (fastify: FastifyInstance): Promise<void> => {
   // Find one Film by ID with Language
@@ -80,29 +79,53 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     }
   })
 
-  fastify.get('/aa', async (req, res) => {
-    try {
-      const payment = await paymentRepository.find({
-        take: 10,
-        order: { payment_id: 'asc' },
-        relations: ['rental', 'rental.inventory']
-      })
-      res.send(payment)
-    } catch (error) {
-      if (error instanceof Error) {
-        res.send({ message: error.message })
-      }
+  // first rental: 2005-05-24T20:53:30.000Z
+  // last rental: 2006-02-14T14:16:03.000Z
+  fastify.get<{
+    Querystring: {
+      skip: number
+      take: number
+      fromDate: Date
+      toDate: Date
+      orderBy: string
+      orderType: string
     }
-  })
-
-  fastify.get('/bb', async (req, res) => {
+  }>('/dates', async (req, res) => {
     try {
-      const inventory = await inventoryRepository.find({
-        take: 10,
-        order: { inventory_id: 'asc' },
-        relations: ['rental']
+      const {
+        take = 5,
+        skip = 0,
+        fromDate,
+        toDate,
+        orderBy = 'rental_id',
+        orderType = 'asc'
+      } = req.query
+
+      const conditions: any = dates(fromDate, toDate)
+      const order: any = orderByAndType(orderBy, orderType)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // const order = { inventory: { film_id: 'asc' } } as FindOptionsOrder<Rental>
+
+      const rental = await rentalRepository.find({
+        select: {
+          rental_id: true,
+          rental_date: true,
+          return_date: true,
+          inventory: {
+            film_id: true,
+            film: {
+              title: true,
+              release_year: true
+            }
+          }
+        },
+        where: conditions,
+        take,
+        skip,
+        order,
+        relations: ['inventory', 'inventory.film']
       })
-      res.send(inventory)
+      res.send(rental)
     } catch (error) {
       if (error instanceof Error) {
         res.send({ message: error.message })
