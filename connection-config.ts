@@ -13,11 +13,12 @@ interface IConnectionConfig {
   database: string
 }
 export const connectionParams: IConnectionConfig = {
-  port: 5432,
-  host: 'localhost',
-  user: 'admin',
-  password: '1234',
-  database: 'testdb'
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  port: Number(process.env.DB_PORT) || 5432,
+  host: process.env.DB_HOST ?? 'localhost',
+  user: process.env.DB_USERNAME ?? 'admin',
+  password: process.env.DB_PASSWORD ?? '1234',
+  database: process.env.DB_DATABASE ?? 'testtypeorm'
 }
 
 export const connectionORM = new DataSource({

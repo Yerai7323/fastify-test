@@ -1,11 +1,12 @@
 import Fastify from 'fastify'
 import 'reflect-metadata'
-import userRoute from './routes/users'
-import dbPlugin from './routes/db-plugin'
-import dbTypeOrm from './routes/db-typeorm'
-import dbDvdRental from './routes/db-dvd-rental'
+// import userRoute from './routes/users'
+// import dbPlugin from './routes/db-plugin'
+// import dbTypeOrm from './routes/db-typeorm'
+// import dbDvdRental from './routes/db-dvd-rental'
+import dbDvdRentalRaw from './routes/db-dvd-rental-raw'
 import postgres from '@fastify/postgres'
-import { connectionParams, connectionORM } from '../connection-config'
+import { connectionParams /* connectionORM */ } from '../connection-config'
 import * as dotenv from 'dotenv'
 
 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
@@ -16,7 +17,11 @@ const PORT = process.env.PORT ?? 3000
 
 const init = async (): Promise<void> => {
   try {
-    await fastify.register(userRoute, { prefix: '/users' })
+    await fastify.register(postgres, connectionParams)
+    console.log('DATABASE PG Connector connected')
+    await fastify.register(dbDvdRentalRaw, { prefix: '/dvd-rental-raw' })
+
+    /* await fastify.register(userRoute, { prefix: '/users' })
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     // dbPlugin
@@ -28,7 +33,7 @@ const init = async (): Promise<void> => {
     await connectionORM.initialize()
     console.log('DATABASE TypeORM connected')
     await fastify.register(dbTypeOrm, { prefix: '/typeorm' })
-    await fastify.register(dbDvdRental, { prefix: '/dvd-rental' })
+    await fastify.register(dbDvdRental, { prefix: '/dvd-rental' }) */
 
     fastify.listen({ port: +PORT }, (err, address) => {
       if (err != null) {
