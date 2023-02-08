@@ -3,7 +3,7 @@ import { findCustomerDataAndAmountSpend, findFilmsWithCategoryAndLanguage, findT
 
 export default async (fastify: FastifyInstance): Promise<void> => {
   // Find films
-  fastify.get('/', async (req, res) => {
+  /* fastify.get('/', async (req, res) => {
     const client = await fastify.pg.connect()
     try {
       const { rows } = await client.query('SELECT * FROM Film ORDER BY film_id ASC OFFSET 0 LIMIT 5')
@@ -12,19 +12,34 @@ export default async (fastify: FastifyInstance): Promise<void> => {
       // Release the client immediately after query resolves, or upon error
       client.release()
     }
+  }) */
+  fastify.get('/', (req, res) => {
+    return 'hello'
+  })
+  fastify.get('/bye', (req, res) => {
+    return 'bye'
   })
 
   // Find films with language
   fastify.get('/with-language', async (req, res) => {
     const client = await fastify.pg.connect()
     try {
-      const query = `SELECT film_id, title, release_year, language.name, language.last_update FROM Film
-       LEFT JOIN language
-       ON film.language_id = language.language_id
-       ORDER BY film_id ASC 
-       OFFSET 0 
-       LIMIT 5`
+      const query = `
+        SELECT 
+          film_id, 
+          title, 
+          release_year, 
+          language.name, 
+          language.last_update 
+        FROM Film
+        LEFT JOIN language
+        ON film.language_id = language.language_id
+        ORDER BY film_id ASC 
+        OFFSET 0 
+        LIMIT 5
+      `
       const { rows } = await client.query(query)
+      console.log(rows)
       return rows
     } finally {
       // Release the client immediately after query resolves, or upon error

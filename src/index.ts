@@ -15,10 +15,15 @@ dotenv.config({ path: `./.env.${process.env.NODE_ENV}` })
 const fastify = Fastify({ logger: true })
 const PORT = process.env.PORT ?? 3000
 
+// Declare a route
+fastify.get('/', async (request, reply) => {
+  return 'hello'
+})
+
 const init = async (): Promise<void> => {
   try {
     await fastify.register(postgres, connectionParams)
-    console.log('DATABASE PG Connector connected')
+    // console.log('DATABASE PG Connector connected')
     await fastify.register(dbDvdRentalRaw, { prefix: '/dvd-rental-raw' })
 
     /* await fastify.register(userRoute, { prefix: '/users' })
@@ -49,3 +54,5 @@ const init = async (): Promise<void> => {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 init()
+
+export default fastify
